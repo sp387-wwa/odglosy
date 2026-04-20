@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Głosy Lasu - Moduł Rozpoznawania</title>
+    <title>Głosy Lasu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { border-radius: 0 !important; }
@@ -46,18 +46,17 @@
         <div id="start-screen" class="bg-white p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border-2 border-black fade-in">
             <h2 class="text-3xl font-black mb-6 text-[#064e3b] uppercase tracking-tight">Czego uczy nas las?</h2>
             <p class="text-gray-600 mb-8 border-l-4 border-green-600 pl-4 font-medium italic">
-                Las to nie tylko drzewa, to cała symfonia dźwięków. Czy potrafisz rozpoznać mieszkańców kniei oraz zjawiska przyrody wsłuchując się w ich odgłosy?
+                Las to nie tylko drzewa, to cała symfonia dźwięków. Czy potrafisz rozpoznać mieszkańców oraz zjawiska przyrody wsłuchując się w ich odgłosy?
             </p>
             <p class="text-sm text-gray-500 mb-8 uppercase font-bold">
                 Instrukcja: Odsłuchaj nagranie, a następnie wybierz jedną z czterech odpowiedzi.
             </p>
             
             <button onclick="startQuiz()" class="w-full bg-[#059669] hover:bg-black text-white font-bold py-5 uppercase tracking-widest text-sm transition-all btn-neo border-2 border-black">
-                Rozpocznij Wyzwanie
+                Rozpocznij Test
             </button>
         </div>
 
-        <!-- Ekran quizu -->
         <div id="quiz-screen" class="hidden fade-in">
             <div class="mb-6 h-4 w-full bg-gray-200 border-2 border-black">
                 <div id="progress-bar" class="h-full bg-[#059669] transition-all duration-300" style="width: 0%"></div>
@@ -88,7 +87,6 @@
             </div>
         </div>
 
-        <!-- Ekran wyników -->
         <div id="result-screen" class="hidden text-center fade-in">
             <div class="bg-white p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border-2 border-black">
                 <p class="text-gray-600 mb-2 font-bold uppercase tracking-widest text-sm">Twój wynik końcowy:</p>
@@ -101,7 +99,7 @@
 
     <script>
         const soundData = [
-            { id: "files/ptak.wav", correct: "Śpiew ptaków (Słowik)", options: ["Stukot dzięcioła", "Śpiew ptaków (Słowik)", "Szum liści", "Skrzypienie pnia"] },
+            { id: "files/ptak.wav", correct: "Śpiew ptaków", options: ["Stukot dzięcioła", "Śpiew ptaków (Słowik)", "Szum liści", "Skrzypienie pnia"] },
             { id: "files/dzieciol.mp3", correct: "Dzięcioł stukający w korę", options: ["Wiewiórka gryząca orzecha", "Dzięcioł stukający w korę", "Łamanie gałęzi", "Kroki na mchu"] },
             { id: "files/burza.mp3", correct: "Nadchodząca burza w lesie", options: ["Szum wodospadu", "Daleki przejazd pociągu", "Nadchodząca burza w lesie", "Wiatr w koronach sosen"] },
             { id: "files/dzik.mp3", correct: "Dzik żerujący w poszyciu", options: ["Dzik żerujący w poszyciu", "Jeż w liściach", "Sarna biegnąca przez las", "Niedźwiedź"] },
@@ -145,7 +143,7 @@
             if (audio.paused) {
                 audio.play().catch(e => {
                     console.error("Audio error:", e);
-                    document.getElementById('audio-status').innerText = "Błąd: Brak pliku " + soundData[currentQ].id;
+                    document.getElementById('audio-status').innerText = "Błąd - Brak pliku " + soundData[currentQ].id;
                 });
                 startUI();
             } else {
