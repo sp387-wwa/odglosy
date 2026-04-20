@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Głosy Lasu - Moduł Rozpoznawania</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { border-radius: 0 !important; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; background-color: #f1f5f9; color: #0f172a; overflow-x: hidden; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .btn-neo {
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+            transition: all 0.1s;
+        }
+        .btn-neo:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+        }
+
+        .bar { width: 4px; height: 10px; background: #059669; margin: 0 2px; display: inline-block; transition: height 0.2s; }
+        .playing .bar { animation: sound 0.5s infinite ease-in-out; }
+        @keyframes sound {
+            0%, 100% { height: 10px; }
+            50% { height: 40px; }
+        }
+        .playing .bar:nth-child(2) { animation-delay: 0.1s; }
+        .playing .bar:nth-child(3) { animation-delay: 0.2s; }
+        .playing .bar:nth-child(4) { animation-delay: 0.15s; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <nav class="bg-[#064e3b] text-white p-6 border-b-4 border-[#043d2e] sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-tighter uppercase">GŁOSY LASU</h1>
+            <div id="score-display" class="hidden font-bold bg-white text-black px-3 py-1 text-sm border-2 border-black">
+                WYNIK: <span id="current-score-val">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto max-w-2xl p-6">
+        <div id="start-screen" class="bg-white p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border-2 border-black fade-in">
+            <h2 class="text-3xl font-black mb-6 text-[#064e3b] uppercase tracking-tight">Czego uczy nas las?</h2>
+            <p class="text-gray-600 mb-8 border-l-4 border-green-600 pl-4 font-medium italic">
+                Las to nie tylko drzewa, to cała symfonia dźwięków. Czy potrafisz rozpoznać mieszkańców kniei oraz zjawiska przyrody wsłuchując się w ich odgłosy?
+            </p>
+            <p class="text-sm text-gray-500 mb-8 uppercase font-bold">
+                Instrukcja: Odsłuchaj nagranie, a następnie wybierz jedną z czterech odpowiedzi.
+            </p>
+            
+            <button onclick="startQuiz()" class="w-full bg-[#059669] hover:bg-black text-white font-bold py-5 uppercase tracking-widest text-sm transition-all btn-neo border-2 border-black">
+                Rozpocznij Wyzwanie
+            </button>
+        </div>
+
+        <!-- Ekran quizu -->
+        <div id="quiz-screen" class="hidden fade-in">
+            <div class="mb-6 h-4 w-full bg-gray-200 border-2 border-black">
+                <div id="progress-bar" class="h-full bg-[#059669] transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <div id="q-container" class="bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border-2 border-black overflow-hidden">
+                <div id="audio-zone" class="w-full bg-slate-900 flex flex-col items-center justify-center p-12 border-b-2 border-black text-white">
+                    <div id="visualizer" class="flex items-center justify-center mb-6 h-12">
+                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    </div>
+                    
+                    <button id="play-btn" onclick="toggleAudio()" class="bg-white text-black p-6 rounded-full btn-neo border-2 border-black hover:bg-green-400">
+                        <svg id="play-icon" width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="stop-icon" class="hidden" width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                    </button>
+                    
+                    <p class="mt-4 text-xs font-bold uppercase tracking-widest text-green-400" id="audio-status">Odsłuchaj nagranie</p>
+                </div>
+                
+                <div class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-[10px] font-bold bg-black text-white px-3 py-1 uppercase">Zadanie Słuchowe</span>
+                        <span id="q-counter" class="text-lg font-black text-green-800">1/6</span>
+                    </div>
+                    <h3 class="text-2xl font-black mb-8 leading-tight text-gray-900 uppercase tracking-tighter">Co to za dźwięk?</h3>
+                    <div id="options-zone" class="grid grid-cols-1 gap-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ekran wyników -->
+        <div id="result-screen" class="hidden text-center fade-in">
+            <div class="bg-white p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border-2 border-black">
+                <p class="text-gray-600 mb-2 font-bold uppercase tracking-widest text-sm">Twój wynik końcowy:</p>
+                <h2 class="text-7xl font-black text-[#064e3b] mb-6 uppercase" id="final-score">0/6</h2>
+                <div id="result-message" class="mb-8 font-medium"></div>
+                <button onclick="location.reload()" class="w-full bg-black text-white p-4 font-bold uppercase text-xs btn-neo border-2 border-black">Zagraj ponownie</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const soundData = [
+            { id: "ptak.mp3", correct: "Śpiew ptaków (Słowik)", options: ["Stukot dzięcioła", "Śpiew ptaków (Słowik)", "Szum liści", "Skrzypienie pnia"] },
+            { id: "dzieciol.mp3", correct: "Dzięcioł stukający w korę", options: ["Wiewiórka gryząca orzecha", "Dzięcioł stukający w korę", "Łamanie gałęzi", "Kroki na mchu"] },
+            { id: "burza.mp3", correct: "Nadchodząca burza w lesie", options: ["Szum wodospadu", "Daleki przejazd pociągu", "Nadchodząca burza w lesie", "Wiatr w koronach sosen"] },
+            { id: "dzik.mp3", correct: "Dzik żerujący w poszyciu", options: ["Dzik żerujący w poszyciu", "Jeż w liściach", "Sarna biegnąca przez las", "Niedźwiedź"] },
+            { id: "potok.mp3", correct: "Leśny strumień", options: ["Ulewny deszcz", "Leśny strumień", "Syczenie węża", "Pękające lody"] },
+            { id: "wilk.mp3", correct: "Wycie wilka", options: ["Pies", "Sowa (Puchacz)", "Wycie wilka", "Wiatr w jaskini"] }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+        let audio = new Audio();
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('score-display').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = soundData[currentQ];
+            const optionsZone = document.getElementById('options-zone');
+            document.getElementById('q-counter').innerText = `${currentQ + 1}/${soundData.length}`;
+            document.getElementById('progress-bar').style.width = `${(currentQ / soundData.length) * 100}%`;
+            
+            audio.pause();
+            audio.src = q.id;
+            audio.load();
+            stopUI();
+
+            optionsZone.innerHTML = '';
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-5 border-2 border-black bg-white hover:bg-black hover:text-white font-bold text-sm transition-all uppercase tracking-tight btn-neo";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt);
+                optionsZone.appendChild(btn);
+            });
+        }
+
+        function toggleAudio() {
+            if (audio.paused) {
+                audio.play().catch(e => {
+                    console.error("Audio error:", e);
+                    document.getElementById('audio-status').innerText = "Błąd: Brak pliku " + soundData[currentQ].id;
+                });
+                startUI();
+            } else {
+                audio.pause();
+                stopUI();
+            }
+        }
+
+        audio.onended = stopUI;
+
+        function startUI() {
+            document.getElementById('visualizer').classList.add('playing');
+            document.getElementById('play-icon').classList.add('hidden');
+            document.getElementById('stop-icon').classList.remove('hidden');
+            document.getElementById('audio-status').innerText = "Trwa odtwarzanie...";
+        }
+
+        function stopUI() {
+            document.getElementById('visualizer').classList.remove('playing');
+            document.getElementById('play-icon').classList.remove('hidden');
+            document.getElementById('stop-icon').classList.add('hidden');
+            document.getElementById('audio-status').innerText = "Kliknij, aby odsłuchać";
+        }
+
+        function checkAnswer(selected) {
+            if (selected === soundData[currentQ].correct) score++;
+            document.getElementById('current-score-val').innerText = score;
+            currentQ++;
+            if (currentQ < soundData.length) showQuestion();
+            else finishQuiz();
+        }
+
+        function finishQuiz() {
+            audio.pause();
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = `${score}/${soundData.length}`;
+            
+            let msg = "";
+            if(score === 6) msg = "Gratulacje! Jesteś prawdziwym strażnikiem lasu!";
+            else if(score >= 4) msg = "Bardzo dobrze! Masz świetny słuch.";
+            else msg = "Nieźle, ale warto częściej zaglądać do lasu na spacer!";
+            
+            document.getElementById('result-message').innerText = msg;
+        }
+    </script>
+</body>
+</html>
